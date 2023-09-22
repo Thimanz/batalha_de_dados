@@ -1,39 +1,67 @@
 import 'dart:math';
 import 'dart:io';
 
+import 'package:interact/interact.dart';
+
 void main(List<String> arguments) {
-  stdout.write("\nDigite o número de rodadas: ");
-  var entrada = stdin.readLineSync();
-  int? rodadas;
-  if (entrada != null) rodadas = int.tryParse(entrada);
-  while (entrada == null || rodadas == null || rodadas < 1) {
-    stdout.write('\nDigite uma opção válida: ');
-    entrada = stdin.readLineSync();
-    if (entrada != null) rodadas = int.tryParse(entrada);
-  }
+  final entrada = Input(
+    prompt: 'Digite o número de rodadas',
+    validator: (String entrada) {
+      if (entrada.contains(RegExp(r'[^0-9]'))) {
+        throw ValidationError('Isso não é um número');
+      } else {
+        return true;
+      }
+    },
+  ).interact();
+
+  int rodadas = int.parse(entrada);
 
   int vitoriasUsuario = 0;
   int vitoriasPC = 0;
+  bool usouDado = false;
   for (int i = 0;
       i < rodadas &&
           vitoriasUsuario <= (rodadas ~/ 2) &&
           vitoriasPC <= (rodadas ~/ 2);
       i++) {
+    var gerador = Random();
     print("\n${(i + 1).toString()}º rodada\n");
     int somaUsuario = 0;
     for (int i = 0; i < 3; i++) {
-      stdout.write("Para jogar seu ${(i + 1).toString()}º dado aperte ENTER");
+      print("Para jogar seu ${(i + 1).toString()}º dado aperte ENTER");
       stdin.readLineSync();
-      var gerador = Random();
       var valorDado = gerador.nextInt(6) + 1;
       somaUsuario += valorDado;
       print("Você tirou um ${valorDado.toString()}");
     }
-    print("O seu total de pontos foi: ${somaUsuario.toString()}\n");
+    print("O seu total de pontos foi: ${somaUsuario.toString()}");
 
+    if (!usouDado) {
+      final opcoes = ['Sim', 'Não'];
+      final opcao = Select(
+        prompt: 'Deseja usar o dado mágico?',
+        options: opcoes,
+      ).interact();
+
+      if (opcoes[opcao] == 'Sim') {
+        usouDado = true;
+        var dadoMagico = gerador.nextBool();
+        if (dadoMagico) {
+          somaUsuario *= 2;
+          print(
+              "Sorte! seus pontos foram dobrado para: ${somaUsuario.toString()}\n");
+        } else {
+          somaUsuario = somaUsuario ~/ 2;
+          print(
+              "Azar! seus pontos foram divididos para: ${somaUsuario.toString()}\n");
+        }
+      }
+    }
+
+    stdout.writeln();
     int somaPC = 0;
     for (int i = 0; i < 3; i++) {
-      var gerador = Random();
       var valorDado = gerador.nextInt(6) + 1;
       somaPC += valorDado;
       print(
